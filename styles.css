@@ -1,0 +1,202 @@
+/* Responsive Styles for Mobile and Smaller Screens */
+@media (max-width: 640px) {
+  /* Header adjustments */
+  header .max-w-screen-xl {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  header h1 {
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  /* Date navigation container */
+  header .bg-slate-100 {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Task input and add button */
+  #add-task-form {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  #add-task-form button {
+    width: 100%;
+  }
+
+  /* PDF task import panel adjustments */
+  .pdf-tasks-container .flex {
+    flex-direction: column;
+  }
+
+  #pdf-source-select,
+  #pdf-search-input {
+    width: 100%;
+  }
+
+  /* Task item internal layout */
+  .task-item {
+    flex-wrap: wrap;
+    padding: 10px 8px;
+  }
+
+  .task-text {
+    width: calc(100% - 40px); /* Account for checkbox width */
+    margin-bottom: 8px;
+  }
+
+  .task-actions {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 6px;
+  }
+
+  /* Task editing mode */
+  .task-edit-mode input {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .task-edit-mode .flex {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Medium-sized screens (tablets) */
+@media (min-width: 641px) and (max-width: 1024px) {
+  /* Slightly adjusted layout for tablets */
+  header .max-w-screen-xl {
+    padding: 0 16px;
+  }
+
+  #add-task-form {
+    flex-wrap: wrap;
+  }
+
+  #task-input {
+    min-width: 60%;
+  }
+
+  /* Better padding for the main container */
+  main .max-w-screen-xl {
+    padding: 16px;
+  }
+}
+
+/* Adjustments for landscape mobile orientation */
+@media (max-height: 500px) {
+  header {
+    position: static; /* Prevent sticky header from taking too much space */
+  }
+
+  .task-list {
+    max-height: 40vh; /* Limit task list height */
+  }
+
+  #pdf-tasks-list {
+    max-height: 120px; /* Smaller height for the PDF tasks panel */
+  }
+}
+
+/* Better touch targets for mobile */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  .task-checkbox,
+  #pdf-tasks-header,
+  .task-item {
+    min-height: 44px; /* Apple's recommended minimum touch target size */
+  }
+
+  button.p-2 {
+    padding: 10px; /* Larger padding for better touch targets */
+  }
+
+  .task-list {
+    padding-right: 4px; /* Reduce scrollbar space on mobile */
+  }
+
+  /* Make the checkboxes easier to tap */
+  .task-checkbox {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/* Fix for Safari's date picker width */
+@supports (-webkit-touch-callout: none) {
+  input[type="date"] {
+    min-width: 100%; /* Fix Safari date input width issues */
+  }
+}
+
+/* Dark mode support for OS preference */
+@media (prefers-color-scheme: dark) {
+  /* Optional: Add dark mode styling if you want to support it */
+  /* Commented out for now as your design is light-focused
+    body {
+      background-color: #1e293b;
+      color: #e2e8f0;
+    }
+
+    .bg-white {
+      background-color: #334155;
+    }
+
+    .bg-slate-50, .bg-slate-100 {
+      background-color: #475569;
+    }
+
+    input, select {
+      background-color: #1e293b;
+      border-color: #64748b;
+      color: #f1f5f9;
+    }
+    */
+}
+
+/* Animation for the task import success message */
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.success-message {
+  animation: fadeOut 0.5s ease-out 1.5s forwards;
+}
+
+/* Transition for the PDF tasks panel */
+#pdf-tasks-panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+#pdf-tasks-panel.visible {
+  max-height: 400px; /* Large enough to contain content */
+}
+
+/* Make the task list scrollbar less intrusive on mobile */
+@media (max-width: 640px) {
+  .task-list::-webkit-scrollbar {
+    width: 4px;
+  }
+}
+
+/* Fix for iOS input zoom issues */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  select,
+  textarea,
+  input {
+    font-size: 16px; /* Prevents iOS zoom on input focus */
+  }
+}
