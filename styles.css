@@ -200,3 +200,32 @@
     font-size: 16px; /* Prevents iOS zoom on input focus */
   }
 }
+/* strike through */
+.completed {
+  background-color: #f1f5f9; /* Tailwind slate-100 */
+}
+.completed .task-text {
+  /* This is the key rule */
+  text-decoration: line-through;
+  color: #64748b; /* Tailwind slate-500 */
+}
+/* Style for editing tasks */
+.editing .task-view-mode {
+  /* Container for text and action buttons */
+  display: none;
+}
+.editing .task-edit-mode {
+  /* Container for input and save/cancel */
+  display: flex; /* Show this container when editing */
+  width: 100%; /* Take full width */
+  align-items: center; /* Align items vertically */
+  gap: 0.5rem; /* Space between input and buttons */
+}
+.task-edit-mode {
+  display: none; /* Hidden by default */
+}
+
+/* Optional: Style the edit input slightly */
+.task-edit-mode input[type="text"] {
+  flex-grow: 1; /* Allow input to take available space */
+}

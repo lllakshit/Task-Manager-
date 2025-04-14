@@ -1,8 +1,8 @@
 /**
  * Daily Task Manager Script
  *
- * Handles date navigation, task adding, deleting, completion toggling,
- * and saving/loading tasks from local storage.
+ * Handles date navigation, task adding, deleting, editing, completion toggling,
+ * PDF task import, and saving/loading tasks from local storage.
  */
 
 // --- DOM Elements ---
@@ -13,6 +13,17 @@ const addTaskForm = document.getElementById("add-task-form");
 const taskInput = document.getElementById("task-input");
 const taskListElement = document.getElementById("task-list");
 const noTasksMessage = document.getElementById("no-tasks-message");
+const goTodayBtn = document.getElementById("go-today-btn");
+const taskStats = document.getElementById("task-stats");
+const clearCompletedBtn = document.getElementById("clear-completed-btn");
+
+// PDF Import Elements
+const pdfTasksHeader = document.getElementById("pdf-tasks-header");
+const pdfTasksPanel = document.getElementById("pdf-tasks-panel");
+const pdfToggleIcon = document.getElementById("pdf-toggle-icon");
+const pdfSourceSelect = document.getElementById("pdf-source-select");
+const pdfSearchInput = document.getElementById("pdf-search-input");
+const pdfTasksList = document.getElementById("pdf-tasks-list");
 
 // --- State ---
 let currentDate = new Date(); // Initialize with today's date
@@ -21,14 +32,15 @@ const ALL_TASKS_STORAGE_KEY = "dailyTasks"; // Key for local storage
 // --- Initialization ---
 document.addEventListener("DOMContentLoaded", () => {
   displayDate();
-  loadAndRenderTasks();
+  loadAndRenderTasks(); // This will also update stats and button visibility initially
   setupEventListeners();
+  setupPdfTaskImport(); // Set up PDF import listeners
 });
 
 // --- Functions ---
 
 /**
- * Formats a Date object into YYYY-MM-DD string format.
+ * Formats a Date object into yyyy-MM-dd string format.
  * @param {Date} date - The date to format.
  * @returns {string} The formatted date string.
  */
@@ -40,7 +52,7 @@ function formatDate(date) {
 }
 
 /**
- * Formats a Date object into a user-friendly string (e.g., "April 12, 2025").
+ * Formats a Date object into a user-friendly string (e.g., "April 14, 2025").
  * @param {Date} date - The date to format.
  * @returns {string} The user-friendly date string.
  */
@@ -54,7 +66,7 @@ function formatDisplayDate(date) {
  */
 function displayDate() {
   currentDateElement.textContent = formatDisplayDate(currentDate);
-  currentDateElement.dataset.dateKey = formatDate(currentDate); // Store YYYY-MM-DD for internal use
+  currentDateElement.dataset.dateKey = formatDate(currentDate); // Store yyyy-MM-dd for internal use
 }
 
 /**
@@ -104,57 +116,124 @@ function renderTasks() {
       taskListElement.appendChild(taskItem);
     });
   }
+  // Update stats and button visibility after rendering
+  updateTaskStats();
+  updateClearButtonVisibility();
 }
 
 /**
  * Creates an HTML list item element for a given task object.
+ * Includes view and edit modes.
  * @param {object} task - The task object (e.g., { id: number, text: string, completed: boolean }).
  * @returns {HTMLLIElement} The created list item element.
  */
 function createTaskElement(task) {
   const li = document.createElement("li");
-  li.className = `flex items-center justify-between p-3 bg-gray-50 rounded-lg shadow-sm hover:bg-gray-100 transition duration-150 ${
-    task.completed ? "completed" : ""
+  // Added 'task-item' class for easier selection and styling consistency
+  li.className = `task-item flex items-center justify-between p-3 bg-white rounded-lg shadow-sm border-l-4 border-transparent hover:bg-slate-50 transition duration-150 ease-in-out ${
+    task.completed ? "completed" : "" // Apply completed class for styling
   }`;
   li.dataset.taskId = task.id; // Store task ID
 
-  // Task Text Span
+  // === View Mode Container ===
+  const viewModeDiv = document.createElement("div");
+  // Added 'task-view-mode' class
+  viewModeDiv.className =
+    "task-view-mode flex items-center justify-between w-full";
+
+  // Task Text Span (inside viewModeDiv)
   const textSpan = document.createElement("span");
   textSpan.textContent = task.text;
-  textSpan.className = "flex-grow mr-3 break-words"; // Allow text wrapping
+  // Added 'task-text' class for strikethrough styling
+  textSpan.className = "task-text flex-grow mr-3 break-words";
 
-  // Buttons Container
+  // Action Buttons Container (inside viewModeDiv)
   const buttonsDiv = document.createElement("div");
-  buttonsDiv.className = "flex-shrink-0 flex items-center gap-2";
+  // Added 'task-actions' class
+  buttonsDiv.className = "task-actions flex-shrink-0 flex items-center gap-1.5"; // Adjusted gap
 
   // Complete/Toggle Button
   const completeButton = document.createElement("button");
-  completeButton.className = `p-2 rounded-full text-sm ${
+  // Adjusted padding, size, added transition and focus styles
+  completeButton.className = `p-1.5 rounded-full text-xs transition-colors duration-150 focus:outline-none focus:ring-1 focus:ring-offset-1 ${
     task.completed
-      ? "bg-yellow-400 hover:bg-yellow-500 text-white"
-      : "bg-green-500 hover:bg-green-600 text-white"
+      ? "bg-slate-200 hover:bg-slate-300 text-slate-600 focus:ring-slate-400"
+      : "bg-green-100 hover:bg-green-200 text-green-700 focus:ring-green-400"
   }`;
-  completeButton.innerHTML = `<i class="fas ${
-    task.completed ? "fa-undo" : "fa-check"
-  } fa-fw"></i>`;
-  completeButton.ariaLabel = task.completed
-    ? "Mark as Incomplete"
-    : "Mark as Complete";
+  // Using Material Symbols Outlined icons
+  completeButton.innerHTML = `<span class="material-symbols-outlined !text-base align-middle">${
+    task.completed ? "undo" : "check_circle" // Using check_circle for completion
+  }</span>`;
+  completeButton.setAttribute(
+    "aria-label",
+    task.completed ? "Mark as Incomplete" : "Mark as Complete"
+  );
   completeButton.onclick = () => toggleTaskCompletion(task.id);
+
+  // Edit Button (New)
+  const editButton = document.createElement("button");
+  editButton.className =
+    "p-1.5 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs transition-colors duration-150 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:ring-offset-1";
+  editButton.innerHTML = `<span class="material-symbols-outlined !text-base align-middle">edit</span>`;
+  editButton.setAttribute("aria-label", "Edit Task");
+  editButton.onclick = (event) => toggleEditMode(event, task.id); // Pass event and ID
 
   // Delete Button
   const deleteButton = document.createElement("button");
   deleteButton.className =
-    "p-2 rounded-full bg-red-500 hover:bg-red-600 text-white text-sm";
-  deleteButton.innerHTML = '<i class="fas fa-trash fa-fw"></i>';
-  deleteButton.ariaLabel = "Delete Task";
+    "p-1.5 rounded-full bg-red-100 hover:bg-red-200 text-red-700 text-xs transition-colors duration-150 focus:outline-none focus:ring-1 focus:ring-red-400 focus:ring-offset-1";
+  deleteButton.innerHTML = `<span class="material-symbols-outlined !text-base align-middle">delete</span>`;
+  deleteButton.setAttribute("aria-label", "Delete Task");
   deleteButton.onclick = () => deleteTask(task.id);
 
-  // Append elements
+  // Append buttons to buttonsDiv
   buttonsDiv.appendChild(completeButton);
+  buttonsDiv.appendChild(editButton); // Add Edit button
   buttonsDiv.appendChild(deleteButton);
-  li.appendChild(textSpan);
-  li.appendChild(buttonsDiv);
+
+  // Append text and buttons to viewModeDiv
+  viewModeDiv.appendChild(textSpan);
+  viewModeDiv.appendChild(buttonsDiv);
+
+  // === Edit Mode Container (New) ===
+  const editModeDiv = document.createElement("div");
+  // Added 'task-edit-mode' class
+  editModeDiv.className = "task-edit-mode items-center w-full"; // Hidden by default via CSS
+
+  const editInput = document.createElement("input");
+  editInput.type = "text";
+  editInput.value = task.text;
+  editInput.className =
+    "flex-grow px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm shadow-sm";
+  // Handle Enter key press in edit input
+  editInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      saveTaskEdit(event, task.id);
+    } else if (event.key === "Escape") {
+      toggleEditMode(event, task.id); // Allow Esc to cancel
+    }
+  });
+
+  const saveButton = document.createElement("button");
+  saveButton.className =
+    "bg-green-500 hover:bg-green-600 text-white font-semibold px-3 py-1.5 rounded-md text-xs shadow hover:shadow-md flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-colors duration-150";
+  saveButton.innerHTML = `<span class="material-symbols-outlined !text-sm align-middle">save</span> Save`;
+  saveButton.onclick = (event) => saveTaskEdit(event, task.id);
+
+  const cancelButton = document.createElement("button");
+  cancelButton.className =
+    "bg-slate-400 hover:bg-slate-500 text-white font-semibold px-3 py-1.5 rounded-md text-xs shadow hover:shadow-md flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-1 transition-colors duration-150";
+  cancelButton.innerHTML = `<span class="material-symbols-outlined !text-sm align-middle">cancel</span> Cancel`;
+  cancelButton.onclick = (event) => toggleEditMode(event, task.id); // Cancel toggles back
+
+  // Append input and buttons to editModeDiv
+  editModeDiv.appendChild(editInput);
+  editModeDiv.appendChild(saveButton);
+  editModeDiv.appendChild(cancelButton);
+
+  // Append View and Edit modes to the main list item
+  li.appendChild(viewModeDiv);
+  li.appendChild(editModeDiv);
 
   return li;
 }
@@ -197,6 +276,7 @@ function handleAddTask(event) {
     // Clear input and re-render
     taskInput.value = "";
     renderTasks();
+    taskInput.focus(); // Keep focus on input for adding more tasks
   }
 }
 
@@ -209,12 +289,20 @@ function toggleTaskCompletion(taskId) {
   const dateKey = formatDate(currentDate);
 
   if (allTasks[dateKey]) {
+    let taskChanged = false;
     // Find the task and update its 'completed' status
-    allTasks[dateKey] = allTasks[dateKey].map((task) =>
-      task.id === taskId ? { ...task, completed: !task.completed } : task
-    );
-    saveTasksToLocalStorage(allTasks);
-    renderTasks(); // Re-render to reflect the change
+    allTasks[dateKey] = allTasks[dateKey].map((task) => {
+      if (task.id === taskId) {
+        taskChanged = true;
+        return { ...task, completed: !task.completed };
+      }
+      return task;
+    });
+
+    if (taskChanged) {
+      saveTasksToLocalStorage(allTasks);
+      renderTasks(); // Re-render to reflect the change (updates class and button)
+    }
   }
 }
 
@@ -224,9 +312,9 @@ function toggleTaskCompletion(taskId) {
  */
 function deleteTask(taskId) {
   // Optional: Add a confirmation dialog
-  // if (!confirm("Are you sure you want to delete this task?")) {
-  //     return;
-  // }
+  if (!confirm("Are you sure you want to delete this task?")) {
+    return;
+  }
 
   const allTasks = loadTasksFromLocalStorage();
   const dateKey = formatDate(currentDate);
@@ -235,13 +323,116 @@ function deleteTask(taskId) {
     // Filter out the task with the matching ID
     allTasks[dateKey] = allTasks[dateKey].filter((task) => task.id !== taskId);
 
-    // If the array becomes empty, optionally remove the date key
+    // If the array becomes empty, remove the date key to keep storage clean
     if (allTasks[dateKey].length === 0) {
       delete allTasks[dateKey];
     }
 
     saveTasksToLocalStorage(allTasks);
     renderTasks(); // Re-render the list
+  }
+}
+
+/**
+ * Toggles the edit mode for a specific task item.
+ * @param {Event} event - The click event.
+ * @param {number} taskId - The ID of the task to edit.
+ */
+function toggleEditMode(event, taskId) {
+  const taskItem = event.target.closest(".task-item"); // Find the parent li using the class
+  if (taskItem) {
+    taskItem.classList.toggle("editing"); // Add/remove the 'editing' class
+
+    // Optional: Focus the input when entering edit mode
+    if (taskItem.classList.contains("editing")) {
+      const input = taskItem.querySelector(
+        '.task-edit-mode input[type="text"]'
+      );
+      if (input) {
+        input.focus();
+        input.select(); // Select current text for easy replacement
+      }
+    } else {
+      // If toggling *off* edit mode (e.g., via Cancel), reset input value
+      const originalTaskText = getTaskTextById(taskId); // Need a helper function for this
+      const input = taskItem.querySelector(
+        '.task-edit-mode input[type="text"]'
+      );
+      if (input && originalTaskText !== null) {
+        input.value = originalTaskText;
+      }
+    }
+  }
+}
+
+/**
+ * Helper function to get the original text of a task by its ID.
+ * @param {number} taskId - The ID of the task.
+ * @returns {string|null} The task text or null if not found.
+ */
+function getTaskTextById(taskId) {
+  const allTasks = loadTasksFromLocalStorage();
+  const dateKey = formatDate(currentDate);
+  if (allTasks[dateKey]) {
+    const task = allTasks[dateKey].find((t) => t.id === taskId);
+    return task ? task.text : null;
+  }
+  return null;
+}
+
+/**
+ * Saves the edited task text.
+ * @param {Event} event - The click event.
+ * @param {number} taskId - The ID of the task being saved.
+ */
+function saveTaskEdit(event, taskId) {
+  const taskItem = event.target.closest(".task-item");
+  const editInput = taskItem.querySelector(
+    '.task-edit-mode input[type="text"]'
+  );
+  const newText = editInput.value.trim();
+
+  if (!newText) {
+    // Provide non-blocking feedback instead of alert
+    editInput.classList.add("border-red-500", "ring-red-500"); // Highlight error
+    editInput.focus();
+    // Maybe add a small temporary message near the input
+    setTimeout(() => {
+      editInput.classList.remove("border-red-500", "ring-red-500");
+    }, 2000);
+    return;
+  }
+
+  const allTasks = loadTasksFromLocalStorage();
+  const dateKey = formatDate(currentDate);
+
+  if (allTasks[dateKey]) {
+    let taskUpdated = false;
+    // Find the task and update its text
+    allTasks[dateKey] = allTasks[dateKey].map((task) => {
+      if (task.id === taskId) {
+        if (task.text !== newText) {
+          // Only update if text actually changed
+          taskUpdated = true;
+          return { ...task, text: newText };
+        }
+      }
+      return task;
+    });
+
+    if (taskUpdated) {
+      saveTasksToLocalStorage(allTasks);
+    }
+
+    // Always exit edit mode and re-render OR update UI directly
+    renderTasks(); // Simplest approach: re-render the whole list
+    // If using direct update:
+    // const textSpan = taskItem.querySelector('.task-view-mode .task-text');
+    // if (textSpan) {
+    //     textSpan.textContent = newText;
+    // }
+    // taskItem.classList.remove('editing'); // Exit edit mode
+    // updateTaskStats(); // Update stats if needed
   }
 }
 
@@ -264,18 +455,86 @@ function goToNextDay() {
 }
 
 /**
- * Sets up all necessary event listeners.
+ * Navigates to the current day.
  */
-function setupEventListeners() {
-  prevDayBtn.addEventListener("click", goToPrevDay);
-  nextDayBtn.addEventListener("click", goToNextDay);
-  addTaskForm.addEventListener("submit", handleAddTask);
-
-  // Add listener for dynamically created elements (using event delegation on the list)
-  // Note: Specific button clicks are handled directly in createTaskElement for simplicity here,
-  // but event delegation is another valid approach.
+function goToToday() {
+  currentDate = new Date(); // Reset to today
+  displayDate();
+  loadAndRenderTasks();
 }
-// --- PDF Tasks Data ---
+
+/**
+ * Updates the task statistics display (e.g., "3/5 completed").
+ */
+function updateTaskStats() {
+  if (!taskStats) return; // Guard clause if element doesn't exist
+
+  const allTasks = loadTasksFromLocalStorage();
+  const dateKey = formatDate(currentDate);
+  const tasksForDate = allTasks[dateKey] || [];
+
+  const totalTasks = tasksForDate.length;
+  const completedTasks = tasksForDate.filter((task) => task.completed).length;
+
+  if (totalTasks === 0) {
+    taskStats.textContent = "No tasks";
+  } else {
+    taskStats.textContent = `${completedTasks} / ${totalTasks} completed`;
+  }
+}
+
+/**
+ * Updates the visibility of the "Clear Completed" button.
+ */
+function updateClearButtonVisibility() {
+  if (!clearCompletedBtn) return; // Guard clause
+
+  const allTasks = loadTasksFromLocalStorage();
+  const dateKey = formatDate(currentDate);
+  const tasksForDate = allTasks[dateKey] || [];
+
+  const hasCompletedTasks = tasksForDate.some((task) => task.completed);
+
+  if (hasCompletedTasks) {
+    clearCompletedBtn.classList.remove("hidden");
+  } else {
+    clearCompletedBtn.classList.add("hidden");
+  }
+}
+
+/**
+ * Clears all completed tasks for the current date.
+ */
+function clearCompletedTasks() {
+  // Optional: Confirmation
+  if (
+    !confirm("Are you sure you want to clear all completed tasks for this day?")
+  ) {
+    return;
+  }
+
+  const allTasks = loadTasksFromLocalStorage();
+  const dateKey = formatDate(currentDate);
+
+  if (allTasks[dateKey]) {
+    const originalLength = allTasks[dateKey].length;
+    // Keep only incomplete tasks
+    allTasks[dateKey] = allTasks[dateKey].filter((task) => !task.completed);
+    const newLength = allTasks[dateKey].length;
+
+    if (newLength < originalLength) {
+      // Only save if something changed
+      // If the array becomes empty, remove the date key
+      if (allTasks[dateKey].length === 0) {
+        delete allTasks[dateKey];
+      }
+      saveTasksToLocalStorage(allTasks);
+      renderTasks(); // Re-render the list
+    }
+  }
+}
+
+// --- PDF Tasks Data (Keep as is or load dynamically if needed) ---
 const pdfTasksData = {
   productivity: [
     "Study College: Java, PHP, Maths",
@@ -302,225 +561,177 @@ const pdfTasksData = {
 };
 
 /**
- * Sets up PDF task import functionality
+ * Sets up PDF task import functionality: toggle panel, filter, import action.
  */
 function setupPdfTaskImport() {
-  const pdfTasksHeader = document.getElementById("pdf-tasks-header");
-  const pdfTasksPanel = document.getElementById("pdf-tasks-panel");
-  const pdfToggleIcon = document.getElementById("pdf-toggle-icon");
-  const pdfSourceSelect = document.getElementById("pdf-source-select");
-  const pdfSearchInput = document.getElementById("pdf-search-input");
-  const pdfTasksList = document.getElementById("pdf-tasks-list");
+  if (!pdfTasksHeader || !pdfTasksPanel) return; // Elements might not exist
 
-  // Toggle PDF tasks panel
+  // Toggle PDF tasks panel visibility
   pdfTasksHeader.addEventListener("click", () => {
-    const isHidden = pdfTasksPanel.classList.contains("hidden");
-    if (isHidden) {
-      pdfTasksPanel.classList.remove("hidden");
+    const isVisible = pdfTasksPanel.classList.contains("visible"); // Use 'visible' class
+    if (isVisible) {
+      pdfTasksPanel.classList.remove("visible");
+      pdfToggleIcon.textContent = "expand_more";
+    } else {
+      pdfTasksPanel.classList.add("visible");
       pdfToggleIcon.textContent = "expand_less";
       renderPdfTasks(); // Load tasks when panel is opened
-    } else {
-      pdfTasksPanel.classList.add("hidden");
-      pdfToggleIcon.textContent = "expand_more";
     }
   });
 
-  // Handle source change
-  pdfSourceSelect.addEventListener("change", renderPdfTasks);
-
-  // Handle search/filter
-  pdfSearchInput.addEventListener("input", renderPdfTasks);
-
-  /**
-   * Renders PDF tasks based on selected source and filter text
-   */
-  function renderPdfTasks() {
-    const source = pdfSourceSelect.value;
-    const filterText = pdfSearchInput.value.toLowerCase().trim();
-    const tasks = pdfTasksData[source] || [];
-
-    // Filter tasks based on search text
-    const filteredTasks = filterText
-      ? tasks.filter((task) => task.toLowerCase().includes(filterText))
-      : tasks;
-
-    // Clear current tasks list
-    pdfTasksList.innerHTML = "";
-
-    if (filteredTasks.length === 0) {
-      const emptyMessage = document.createElement("li");
-      emptyMessage.className = "text-center text-slate-500 italic py-4";
-      emptyMessage.textContent = filterText
-        ? "No matching tasks found"
-        : "No tasks available";
-      pdfTasksList.appendChild(emptyMessage);
-    } else {
-      // Create list items for each task
-      filteredTasks.forEach((taskText) => {
-        const li = document.createElement("li");
-        li.className =
-          "flex items-center justify-between p-2 bg-slate-50 hover:bg-slate-100 rounded-lg";
-
-        const textSpan = document.createElement("span");
-        textSpan.className = "flex-grow mr-3";
-        textSpan.textContent = taskText;
-
-        const importBtn = document.createElement("button");
-        importBtn.className =
-          "p-2 rounded-full bg-indigo-500 text-white hover:bg-indigo-600 text-sm flex-shrink-0";
-        importBtn.innerHTML =
-          '<span class="material-symbols-outlined" style="font-size: 18px;">add</span>';
-        importBtn.ariaLabel = "Import Task";
-        importBtn.onclick = () => importPdfTask(taskText);
-
-        li.appendChild(textSpan);
-        li.appendChild(importBtn);
-        pdfTasksList.appendChild(li);
-      });
-    }
+  // Handle source dropdown change
+  if (pdfSourceSelect) {
+    pdfSourceSelect.addEventListener("change", renderPdfTasks);
   }
 
-  /**
-   * Imports a task from PDF to the task list
-   * @param {string} taskText - The text of the task to import
-   */
-  function importPdfTask(taskText) {
-    const allTasks = loadTasksFromLocalStorage();
-    const dateKey = formatDate(currentDate);
-
-    // Initialize array for the date if it doesn't exist
-    if (!allTasks[dateKey]) {
-      allTasks[dateKey] = [];
-    }
-
-    // Create new task object
-    const newTask = {
-      id: Date.now(), // Simple unique ID using timestamp
-      text: taskText,
-      completed: false,
-    };
-
-    // Add task and save
-    allTasks[dateKey].push(newTask);
-    saveTasksToLocalStorage(allTasks);
-
-    // Re-render and show success feedback
-    renderTasks();
-
-    // Optional: Show a temporary success message
-    const successMsg = document.createElement("div");
-    successMsg.className =
-      "fixed top-4 right-4 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-50";
-    successMsg.textContent = "Task imported successfully!";
-    document.body.appendChild(successMsg);
-
-    // Remove success message after 2 seconds
-    setTimeout(() => {
-      document.body.removeChild(successMsg);
-    }, 2000);
+  // Handle search/filter input
+  if (pdfSearchInput) {
+    pdfSearchInput.addEventListener("input", renderPdfTasks);
   }
 }
 
-// Add to the existing setupEventListeners function
-function setupEventListeners() {
-  prevDayBtn.addEventListener("click", goToPrevDay);
-  nextDayBtn.addEventListener("click", goToNextDay);
-  addTaskForm.addEventListener("submit", handleAddTask);
+/**
+ * Renders tasks in the PDF import panel based on selected source and filter text.
+ */
+function renderPdfTasks() {
+  if (!pdfTasksList || !pdfSourceSelect || !pdfSearchInput) return; // Ensure elements exist
 
-  // Add Go to Today functionality
-  const goTodayBtn = document.getElementById("go-today-btn");
-  if (goTodayBtn) {
-    goTodayBtn.addEventListener("click", () => {
-      currentDate = new Date(); // Reset to today
-      displayDate();
-      loadAndRenderTasks();
+  const source = pdfSourceSelect.value;
+  const filterText = pdfSearchInput.value.toLowerCase().trim();
+  const tasks = pdfTasksData[source] || [];
+
+  // Filter tasks based on search text
+  const filteredTasks = filterText
+    ? tasks.filter((task) => task.toLowerCase().includes(filterText))
+    : tasks;
+
+  // Clear current tasks list
+  pdfTasksList.innerHTML = "";
+
+  if (filteredTasks.length === 0) {
+    const emptyMessage = document.createElement("li");
+    emptyMessage.className = "text-center text-slate-500 italic py-4";
+    emptyMessage.textContent = filterText
+      ? "No matching tasks found"
+      : "No tasks available in selected source";
+    pdfTasksList.appendChild(emptyMessage);
+  } else {
+    // Create list items for each task
+    filteredTasks.forEach((taskText) => {
+      const li = document.createElement("li");
+      li.className =
+        "flex items-center justify-between p-2 bg-slate-50 hover:bg-slate-100 rounded-md"; // Adjusted styling
+
+      const textSpan = document.createElement("span");
+      textSpan.className = "flex-grow mr-3 text-sm text-slate-700"; // Adjusted styling
+      textSpan.textContent = taskText;
+
+      const importBtn = document.createElement("button");
+      importBtn.className =
+        "p-1.5 rounded-full bg-indigo-100 text-indigo-700 hover:bg-indigo-200 text-xs flex-shrink-0 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:ring-offset-1 transition-colors duration-150"; // Adjusted styling
+      importBtn.innerHTML =
+        '<span class="material-symbols-outlined !text-sm align-middle">add_task</span>'; // Using add_task icon
+      importBtn.setAttribute("aria-label", "Import Task");
+      importBtn.onclick = () => importPdfTask(taskText);
+
+      li.appendChild(textSpan);
+      li.appendChild(importBtn);
+      pdfTasksList.appendChild(li);
     });
   }
-
-  // Set up the PDF task import feature
-  setupPdfTaskImport();
-
-  // Add Stats display functionality
-  const taskStats = document.getElementById("task-stats");
-  if (taskStats) {
-    // Update stats when tasks change
-    const observer = new MutationObserver(updateTaskStats);
-    observer.observe(taskListElement, { childList: true, subtree: true });
-
-    // Initial stats update
-    updateTaskStats();
-  }
-
-  // Add clear completed tasks functionality
-  const clearCompletedBtn = document.getElementById("clear-completed-btn");
-  if (clearCompletedBtn) {
-    clearCompletedBtn.addEventListener("click", clearCompletedTasks);
-    // Initial button visibility check
-    updateClearButtonVisibility();
-  }
 }
 
 /**
- * Updates the task statistics display
+ * Imports a task from the PDF panel to the main task list for the current date.
+ * @param {string} taskText - The text of the task to import.
  */
-function updateTaskStats() {
-  const taskStats = document.getElementById("task-stats");
-  if (!taskStats) return;
-
+function importPdfTask(taskText) {
   const allTasks = loadTasksFromLocalStorage();
   const dateKey = formatDate(currentDate);
-  const tasksForDate = allTasks[dateKey] || [];
 
-  const totalTasks = tasksForDate.length;
-  const completedTasks = tasksForDate.filter((task) => task.completed).length;
-
-  if (totalTasks === 0) {
-    taskStats.textContent = "No tasks";
-  } else {
-    taskStats.textContent = `${completedTasks}/${totalTasks} completed`;
+  // Initialize array for the date if it doesn't exist
+  if (!allTasks[dateKey]) {
+    allTasks[dateKey] = [];
   }
 
-  // Update clear button visibility
-  updateClearButtonVisibility();
+  // Check if task already exists for the day (optional)
+  const taskExists = allTasks[dateKey].some((task) => task.text === taskText);
+  if (taskExists) {
+    // Optionally provide feedback that task already exists
+    console.log("Task already exists for this date.");
+    showTemporaryFeedback("Task already exists!", "bg-yellow-500");
+    return;
+  }
+
+  // Create new task object
+  const newTask = {
+    id: Date.now(), // Simple unique ID using timestamp
+    text: taskText,
+    completed: false,
+  };
+
+  // Add task and save
+  allTasks[dateKey].push(newTask);
+  saveTasksToLocalStorage(allTasks);
+
+  // Re-render the main task list
+  renderTasks();
+
+  // Show success feedback
+  showTemporaryFeedback("Task imported successfully!", "bg-green-500");
 }
 
 /**
- * Updates the visibility of the clear completed button
+ * Shows a temporary feedback message at the top right of the screen.
+ * @param {string} message - The message to display.
+ * @param {string} bgColorClass - Tailwind background color class (e.g., 'bg-green-500').
  */
-function updateClearButtonVisibility() {
-  const clearCompletedBtn = document.getElementById("clear-completed-btn");
-  if (!clearCompletedBtn) return;
+function showTemporaryFeedback(message, bgColorClass = "bg-green-500") {
+  const feedbackMsg = document.createElement("div");
+  // Improved styling for feedback message
+  feedbackMsg.className = `fixed top-5 right-5 ${bgColorClass} text-white py-2 px-4 rounded-lg shadow-lg z-50 text-sm font-medium animate-fade-in-out`;
+  feedbackMsg.textContent = message;
+  document.body.appendChild(feedbackMsg);
 
-  const allTasks = loadTasksFromLocalStorage();
-  const dateKey = formatDate(currentDate);
-  const tasksForDate = allTasks[dateKey] || [];
-
-  const hasCompletedTasks = tasksForDate.some((task) => task.completed);
-
-  if (hasCompletedTasks) {
-    clearCompletedBtn.classList.remove("hidden");
-  } else {
-    clearCompletedBtn.classList.add("hidden");
+  // Add CSS for animation if not already present
+  const styleId = "feedback-animation-style";
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement("style");
+    style.id = styleId;
+    style.innerHTML = `
+        @keyframes fadeInOut {
+          0% { opacity: 0; transform: translateY(-10px); }
+          15% { opacity: 1; transform: translateY(0); }
+          85% { opacity: 1; transform: translateY(0); }
+          100% { opacity: 0; transform: translateY(-10px); }
+        }
+        .animate-fade-in-out {
+          animation: fadeInOut 2.5s ease-in-out forwards;
+        }
+        `;
+    document.head.appendChild(style);
   }
-}
 
-/**
- * Clears all completed tasks for the current date
- */
-function clearCompletedTasks() {
-  const allTasks = loadTasksFromLocalStorage();
-  const dateKey = formatDate(currentDate);
-
-  if (allTasks[dateKey]) {
-    // Keep only incomplete tasks
-    allTasks[dateKey] = allTasks[dateKey].filter((task) => !task.completed);
-
-    // If the array becomes empty, optionally remove the date key
-    if (allTasks[dateKey].length === 0) {
-      delete allTasks[dateKey];
+  // Remove feedback message after animation duration (2.5 seconds)
+  setTimeout(() => {
+    if (document.body.contains(feedbackMsg)) {
+      document.body.removeChild(feedbackMsg);
     }
+  }, 2500);
+}
 
-    saveTasksToLocalStorage(allTasks);
-    renderTasks(); // Re-render the list
-  }
+/**
+ * Sets up all necessary event listeners.
+ */
+function setupEventListeners() {
+  if (prevDayBtn) prevDayBtn.addEventListener("click", goToPrevDay);
+  if (nextDayBtn) nextDayBtn.addEventListener("click", goToNextDay);
+  if (addTaskForm) addTaskForm.addEventListener("submit", handleAddTask);
+  if (goTodayBtn) goTodayBtn.addEventListener("click", goToToday);
+  if (clearCompletedBtn)
+    clearCompletedBtn.addEventListener("click", clearCompletedTasks);
+
+  // Note: Listeners for task-specific buttons (complete, edit, delete, save, cancel)
+  // are added dynamically within the createTaskElement function when tasks are rendered.
+  // Event delegation could be used as an alternative, but direct assignment is simpler here.
 }
