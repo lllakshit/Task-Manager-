@@ -4,48 +4,59 @@
 /* Base Styles (Affecting mobile implicitly)    */
 /* ============================================ */
 
-/* Add some base padding to the body to prevent content touching edges */
 body {
-  padding: 0.5rem; /* Add some base padding */
+  padding: 0; /* Remove base padding, handle within elements */
+  -webkit-text-size-adjust: 100%; /* Prevent text scaling on mobile */
+  text-size-adjust: 100%;
 }
 
-/* Ensure buttons have minimum touch target size */
+/* Consistent minimum touch target size */
 button,
-.task-checkbox,
+.task-checkbox, /* If you reintroduce checkboxes */
 #pdf-tasks-header,
 .task-item,
-select {
-  min-height: 44px; /* Minimum touch target height */
-  /* Ensure vertical alignment is consistent */
+select,
+input[type="text"] {
+  /* Include input here */
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box; /* Include padding/border in element's total width/height */
 }
 
-/* Adjust padding on smaller buttons to maintain touch area */
+/* Adjust padding on smaller buttons */
 button.p-1\.5 {
-  /* Target specific small buttons like task actions */
-  padding: 0.6rem; /* Increase padding slightly for easier tapping */
+  padding: 0.6rem;
 }
 button.p-2 {
-  padding: 0.75rem; /* Increase padding slightly */
+  padding: 0.75rem;
 }
 
-/* Make sure inputs and selects are readable */
+/* Base Input/Select styles */
 input[type="text"],
-input[type="date"], /* If you add date inputs */
+input[type="date"],
 select,
 textarea {
-  /* If you add textareas */
-  font-size: 16px; /* Prevents iOS auto-zoom on focus */
-  width: 100%; /* Default to full width, can be overridden */
-  padding: 0.75rem 1rem; /* Comfortable padding */
-  min-height: 44px; /* Ensure touch target size */
+  font-size: 16px; /* Prevent iOS auto-zoom */
+  width: 100%;
+  padding: 0.65rem 0.9rem; /* Adjusted padding */
+  border: 1px solid #cbd5e1; /* Default border color (slate-300) */
+  border-radius: 0.375rem; /* Default border radius (rounded-md) */
+}
+input[type="text"]:focus,
+select:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  border-color: #6366f1; /* indigo-500 */
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3); /* Ring effect */
 }
 
-/* Adjust icon sizes slightly for better clarity */
+/* Icon sizes */
 .material-symbols-outlined {
-  font-size: 1.25rem; /* Default icon size */
+  font-size: 1.25rem;
+  vertical-align: middle;
+  line-height: 1;
 }
 .material-symbols-outlined.\!text-sm {
   font-size: 1rem;
@@ -61,231 +72,248 @@ textarea {
 /* Mobile Screens (max-width: 640px)           */
 /* ============================================ */
 @media (max-width: 640px) {
-  body {
-    padding: 0.25rem; /* Reduce body padding slightly on small screens */
-  }
-
-  /* --- Header Adjustments --- */
+  /* --- Header --- */
+  header {
+    padding: 0.75rem;
+  } /* Add padding back to header */
   header .max-w-screen-xl {
-    flex-direction: column; /* Stack header items */
-    align-items: center; /* Center items */
-    gap: 1rem; /* Space between title and date nav */
-    padding: 0 0.5rem; /* Reduce horizontal padding */
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
   }
-
   header h1 {
-    text-align: center;
-    font-size: 1.25rem; /* Slightly smaller title */
+    font-size: 1.25rem;
   }
 
-  /* Date navigation container */
+  /* Date navigation */
   header .bg-slate-100 {
-    width: 100%; /* Full width */
-    justify-content: space-around; /* Distribute space */
-    padding: 0.25rem; /* Slightly reduce padding */
+    width: 100%;
+    justify-content: space-between; /* Space out buttons/date */
+    padding: 0.3rem 0.5rem;
   }
   #current-date {
-    font-size: 0.9rem; /* Smaller date text */
+    font-size: 0.85rem;
   }
   #go-today-btn {
-    font-size: 0.7rem; /* Smaller 'Go to Today' */
+    font-size: 0.7rem;
   }
+  header .bg-slate-100 button {
+    padding: 0.5rem;
+  } /* Smaller nav buttons */
 
-  /* --- Main Content Padding --- */
+  /* --- Main Content Area --- */
   main.p-4 {
     padding: 0.75rem;
-  } /* Adjust main padding */
+  }
   main .max-w-screen-xl {
-    padding: 0.75rem; /* Adjust padding within the main card */
+    padding: 0.75rem;
   }
 
   /* --- Add Task Form --- */
   #add-task-form {
-    flex-direction: column; /* Stack input and button */
-    gap: 0.75rem; /* Space between input and button */
-    margin-bottom: 1rem; /* Reduce bottom margin */
-    padding-bottom: 1rem; /* Reduce padding */
-  }
-  #add-task-form input[type="text"] {
-    text-align: center; /* Center placeholder */
-    padding: 0.6rem 0.75rem; /* Adjust padding */
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.25rem;
   }
   #add-task-form button {
-    width: 100%; /* Full width button */
-    padding: 0.75rem; /* Ensure good button size */
-  }
-  #add-task-form button span:first-of-type {
-    /* Icon */
-    margin-right: 0.5rem;
+    width: 100%;
+    padding: 0.75rem;
   }
 
-  /* --- PDF Task Import Section --- */
+  /* --- PDF Task Import --- */
   .pdf-tasks-container {
-    margin-bottom: 1rem; /* Reduce margin */
+    margin-bottom: 1.25rem;
   }
   #pdf-tasks-header {
-    padding: 0.75rem; /* Adjust padding */
-    flex-direction: column; /* Stack title and icon */
-    align-items: flex-start; /* Align text left */
-    gap: 0.25rem;
+    padding: 0.75rem 1rem; /* More horizontal padding */
+    flex-direction: row; /* Keep title and icon in row */
+    justify-content: space-between; /* Space them out */
+    align-items: center; /* Align vertically */
   }
   #pdf-tasks-header h3 {
-    font-size: 1rem; /* Smaller header */
+    font-size: 1rem;
   }
   #pdf-tasks-header span#pdf-toggle-icon {
-    position: absolute; /* Position icon top right */
-    top: 0.75rem;
-    right: 0.75rem;
-  }
+    position: static;
+  } /* Remove absolute positioning */
 
   #pdf-tasks-panel .flex {
-    flex-direction: column; /* Stack select and filter */
+    flex-direction: column;
     gap: 0.75rem;
   }
-  #pdf-source-select,
-  #pdf-search-input {
-    width: 100%; /* Full width controls */
-  }
   #pdf-tasks-list {
-    max-height: 150px; /* Adjust max height */
-    padding-right: 2px; /* Reduce scrollbar gap */
+    max-height: 150px;
   }
   #pdf-tasks-list li {
-    padding: 0.5rem 0.75rem; /* Adjust item padding */
+    padding: 0.5rem 0.75rem;
   }
   #pdf-tasks-list li span {
-    /* Text */
     font-size: 0.85rem;
   }
   #pdf-tasks-list li button {
-    /* Import button */
     padding: 0.4rem;
   }
 
   /* --- Task List Section --- */
   .task-list-container h3 {
-    /* "Today's Tasks" header */
     font-size: 1.1rem;
   }
   #task-stats {
     font-size: 0.75rem;
-    padding: 0.25rem 0.6rem; /* Adjust padding */
+    padding: 0.25rem 0.6rem;
   }
 
   /* Task list scrollbar */
   .task-list::-webkit-scrollbar {
-    width: 4px; /* Thinner scrollbar */
+    width: 4px;
   }
   .task-list {
-    padding-right: 2px; /* Reduce scrollbar gap */
-    min-height: 150px; /* Ensure minimum height */
+    padding-right: 4px;
+    min-height: 150px;
   }
 
-  /* Task item layout */
+  /* --- Task Item Layout (Revised Flex Approach) --- */
   .task-item {
-    flex-wrap: wrap; /* Allow wrapping */
+    /* Use flex, allow wrapping */
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start; /* Align items to the top */
+    justify-content: space-between; /* Push actions to the end */
     padding: 0.75rem 0.5rem; /* Adjust padding */
-    position: relative; /* For absolute positioning of actions */
-    min-height: 50px; /* Ensure minimum height */
-    border-left-width: 3px; /* Thinner border */
+    gap: 0.5rem; /* Gap between text area and actions if they wrap */
+    border-left-width: 3px;
   }
 
-  .task-view-mode {
-    flex-grow: 1; /* Take available space */
-    /* Buttons will be positioned absolutely */
+  /* Container for the text itself */
+  .task-view-mode .task-text {
+    /* Allow text to take available space, considering potential button width */
+    flex-grow: 1;
+    /* Use width calc if needed, but flex-grow often works better */
+    /* width: calc(100% - 80px); Adjust '80px' based on typical action button combined width */
+    padding-right: 0.5rem; /* Add some padding to not touch buttons if side-by-side */
+    font-size: 0.9rem;
+    line-height: 1.4; /* Improve readability */
+    /* Ensure text breaks correctly */
+    word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto; /* Allow hyphenation */
   }
 
-  .task-text {
-    width: 100%; /* Full width initially */
-    padding-right: 50px; /* Make space for action buttons */
-    margin-bottom: 0; /* Remove bottom margin */
-    font-size: 0.9rem; /* Slightly smaller text */
-  }
-
+  /* Action button container */
   .task-actions {
-    position: absolute; /* Position buttons top-right */
-    top: 0.5rem;
-    right: 0.5rem;
-    gap: 0.3rem; /* Reduce gap between buttons */
-    /* Ensure buttons don't wrap */
-    flex-wrap: nowrap;
-    width: auto; /* Don't take full width */
+    /* Keep buttons together, don't let them grow/shrink */
+    flex-shrink: 0;
+    display: flex; /* Ensure flex properties apply */
+    gap: 0.35rem; /* Adjust gap */
+    /* No absolute positioning */
   }
   .task-actions button {
     padding: 0.5rem; /* Adjust padding */
   }
 
-  /* Task editing mode */
+  /* Specific styling for completed task text */
+  .completed .task-text {
+    text-decoration: line-through;
+    color: #a1a1aa; /* Slightly lighter grey (zinc-400) */
+  }
+
+  /* --- Task Editing Mode (Mobile) --- */
   .task-edit-mode {
-    flex-direction: column; /* Stack input and buttons */
-    gap: 0.5rem;
-  }
-  .task-edit-mode input {
+    display: none; /* Keep hidden by default */
+    flex-direction: column;
     width: 100%;
-    margin-bottom: 0.5rem; /* Space below input */
+    gap: 0.75rem; /* Space between input and button row */
   }
+  /* Style when the task item is being edited */
+  .task-item.editing .task-edit-mode {
+    display: flex; /* Show the edit controls */
+  }
+  .task-item.editing .task-view-mode {
+    display: none; /* Hide the view mode */
+  }
+
+  .task-edit-mode input[type="text"] {
+    width: 100%; /* Full width input */
+    margin-bottom: 0; /* Remove margin, use gap */
+    font-size: 0.9rem; /* Match view mode text size */
+  }
+  /* Container for Save/Cancel buttons */
   .task-edit-mode div {
-    /* Container for save/cancel */
     display: flex;
-    justify-content: flex-end; /* Align buttons right */
+    justify-content: flex-end;
     gap: 0.5rem;
     width: 100%;
   }
   .task-edit-mode button {
-    padding: 0.5rem 0.75rem; /* Adjust button padding */
-    font-size: 0.8rem; /* Smaller button text */
+    padding: 0.5rem 0.85rem; /* Adjust button padding */
+    font-size: 0.8rem;
+    flex-grow: 0; /* Don't let buttons grow */
+    flex-shrink: 0;
   }
 
-  /* Clear Completed Button */
+  /* --- Clear Completed Button --- */
   #clear-completed-btn {
-    width: 100%; /* Full width */
-    margin-top: 0.5rem; /* Add some space above */
+    width: 100%;
+    margin-top: 1rem; /* More space above */
     padding: 0.75rem;
     font-size: 0.85rem;
   }
 
-  /* No tasks message */
+  /* --- No tasks message --- */
   #no-tasks-message {
-    padding: 2rem 1rem; /* Adjust padding */
+    padding: 2.5rem 1rem;
     font-size: 0.9rem;
   }
   #no-tasks-message .material-symbols-outlined {
-    font-size: 2rem; /* Smaller icon */
+    font-size: 2rem;
   }
 }
 
 /* ============================================ */
-/* Medium-sized screens (tablets)              */
+/* Medium-sized screens (Tablets)              */
 /* (min-width: 641px) and (max-width: 1024px)  */
 /* ============================================ */
 @media (min-width: 641px) and (max-width: 1024px) {
-  /* Slightly adjusted layout for tablets if needed */
   header .max-w-screen-xl {
-    padding: 0 1rem; /* Adjust padding */
+    padding: 0 1rem;
     gap: 1.5rem;
   }
-
   #add-task-form {
-    /* Can potentially keep row layout, but ensure input doesn't get too small */
-    flex-wrap: nowrap; /* Prevent wrapping */
+    flex-wrap: nowrap;
   }
   #task-input {
-    min-width: 60%; /* Ensure input has decent width */
+    min-width: 60%;
   }
-
   main .max-w-screen-xl {
-    padding: 1.5rem; /* More padding */
+    padding: 1.5rem;
   }
 
-  .task-text {
-    font-size: 1rem; /* Reset font size if changed for mobile */
+  .task-item {
+    flex-wrap: nowrap; /* Prevent wrapping on tablets */
+    align-items: center; /* Align items centrally */
+  }
+  .task-view-mode .task-text {
+    font-size: 1rem; /* Reset font size */
+    padding-right: 1rem; /* Ensure padding */
+    margin-bottom: 0;
   }
   .task-actions {
-    /* Reset positioning if changed for mobile */
-    position: static;
-    width: auto;
-    margin-top: 0;
+    /* Reset any mobile-specific positioning if needed */
   }
+  .task-edit-mode {
+    flex-direction: row; /* Edit controls in a row */
+    align-items: center;
+  }
+  .task-edit-mode input {
+    width: auto;
+    flex-grow: 1;
+    margin-bottom: 0;
+    margin-right: 0.5rem;
+  }
+  .task-edit-mode div {
+    width: auto;
+  } /* Let buttons size naturally */
 }
 
 /* ============================================ */
@@ -293,49 +321,32 @@ textarea {
 /* (max-height: 500px) - Adjust as needed     */
 /* ============================================ */
 @media (max-height: 500px) and (orientation: landscape) {
-  /* Reduce vertical space usage in landscape */
+  /* Less aggressive changes than before */
   header {
-    position: static; /* Unstick header if needed */
     padding: 0.5rem;
   }
-  header h1 {
-    font-size: 1.1rem;
-  }
   header .max-w-screen-xl {
-    gap: 0.5rem;
+    gap: 0.75rem;
   }
-  header .bg-slate-100 {
-    padding: 0.1rem;
-  } /* Smaller date nav */
-  #current-date {
-    font-size: 0.8rem;
-  }
-  #go-today-btn {
-    display: none;
-  } /* Hide less critical button */
-
   #add-task-form {
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.75rem;
-    flex-direction: row; /* Keep form in a row */
-    gap: 0.5rem;
+    flex-direction: row;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
   }
   #add-task-form button {
     width: auto;
     padding: 0.6rem 1rem;
-  } /* Auto width button */
+  }
 
-  .task-list-container {
-    margin-top: 0.5rem; /* Reduce space */
-  }
   .task-list {
-    max-height: 45vh; /* Limit task list height */
-  }
+    max-height: 40vh;
+  } /* Adjust based on testing */
   #pdf-tasks-panel.visible {
-    max-height: 150px; /* Smaller height for the PDF tasks panel */
+    max-height: 120px;
   }
   #pdf-tasks-list {
-    max-height: 100px; /* Even smaller */
+    max-height: 80px;
   }
 }
 
@@ -343,24 +354,32 @@ textarea {
 /* Fixes & Enhancements                        */
 /* ============================================ */
 
-/* Fix for Safari's date picker width if you use date inputs */
-/* @supports (-webkit-touch-callout: none) {
-  input[type="date"] {
-    min-width: 100px; /* Adjust as needed */
-/* } */
-/* } */
-
-/* PDF Panel Animation (ensure it's smooth) */
+/* Ensure smooth transitions */
+button,
+input,
+select,
+textarea,
+.task-item,
 #pdf-tasks-panel {
-  /* Styles defined in base CSS */
-  transition: max-height 0.3s ease-out, padding 0.3s ease-out,
-    border-color 0.3s ease-out, margin 0.3s ease-out;
+  transition: all 0.15s ease-in-out;
 }
-#pdf-tasks-panel.visible {
-  /* Styles defined in base CSS */
+/* Add transition specifically for background color on hover */
+.task-item:hover {
+  background-color: #f1f5f9; /* slate-100 */
 }
 
-/* Feedback message animation (if using from script.js) */
+#pdf-tasks-panel {
+  /* Ensure transition includes properties changed on visibility */
+  transition: max-height 0.3s ease-out, padding 0.3s ease-out,
+    border-color 0.3s ease-out, margin 0.3s ease-out, opacity 0.3s ease-out;
+  opacity: 1; /* Default opacity */
+}
+#pdf-tasks-panel:not(.visible) {
+  opacity: 0; /* Fade out when hidden */
+  max-height: 0 !important; /* Ensure height collapses */
+}
+
+/* Feedback message animation */
 @keyframes fadeInOut {
   0% {
     opacity: 0;
