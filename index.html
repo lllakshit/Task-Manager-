@@ -95,6 +95,14 @@
       .completed:hover {
         background-color: #f1f5f9; /* Consistent hover */
       }
+      /* Style for tasks with notification enabled */
+      .task-item.has-notification .notify-button {
+        color: #fbbf24; /* amber-400 */
+        background-color: #fef3c7; /* amber-100 */
+      }
+      .task-item.has-notification .notify-button:hover {
+        background-color: #fde68a; /* amber-200 */
+      }
 
       /* --- Edit Mode Styling --- */
       .editing .task-view-mode {
@@ -109,6 +117,27 @@
       }
       .task-edit-mode input[type="text"] {
         /* Input styling primarily done via Tailwind in script.js */
+      }
+      /* --- Notification Time Input --- */
+      .notify-time-input {
+        /* Basic styling - can be enhanced */
+        padding: 2px 5px;
+        border: 1px solid #cbd5e1; /* slate-300 */
+        border-radius: 4px;
+        font-size: 0.8rem;
+        width: 70px; /* Fixed width for HH:MM */
+        margin-left: 5px;
+        text-align: center;
+        transition: border-color 0.15s ease-in-out;
+      }
+      .notify-time-input:focus {
+        outline: none;
+        border-color: #6366f1; /* indigo-500 */
+      }
+      .notify-time-input:disabled {
+        background-color: #f1f5f9; /* slate-100 */
+        cursor: not-allowed;
+        opacity: 0.7;
       }
 
       /* Transitions for buttons */

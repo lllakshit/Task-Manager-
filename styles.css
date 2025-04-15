@@ -16,9 +16,10 @@ button,
 #pdf-tasks-header,
 .task-item,
 select,
-input[type="text"] {
-  /* Include input here */
-  min-height: 44px;
+input[type="text"],
+input[type="time"] {
+  /* Added time input */
+  min-height: 44px; /* Increased slightly for better touch */
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -33,9 +34,10 @@ button.p-2 {
   padding: 0.75rem;
 }
 
-/* Base Input/Select styles */
+/* Base Input/Select/Time styles */
 input[type="text"],
 input[type="date"],
+input[type="time"], /* Added time input */
 select,
 textarea {
   font-size: 16px; /* Prevent iOS auto-zoom */
@@ -45,11 +47,33 @@ textarea {
   border-radius: 0.375rem; /* Default border radius (rounded-md) */
 }
 input[type="text"]:focus,
+input[type="time"]:focus, /* Added time input */
 select:focus {
   outline: 2px solid transparent;
   outline-offset: 2px;
   border-color: #6366f1; /* indigo-500 */
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3); /* Ring effect */
+}
+
+/* Specific styles for time input */
+.notify-time-input {
+  min-height: auto; /* Override general min-height */
+  height: 30px; /* Specific height */
+  padding: 2px 5px;
+  border: 1px solid #cbd5e1; /* slate-300 */
+  border-radius: 4px;
+  font-size: 0.8rem;
+  width: 70px; /* Fixed width for HH:MM */
+  text-align: center;
+  transition: border-color 0.15s ease-in-out;
+  display: inline-flex; /* Ensure alignment */
+  vertical-align: middle; /* Align with buttons */
+  /* Removed margin-left as gap handles spacing now */
+}
+.notify-time-input:disabled {
+  background-color: #f1f5f9; /* slate-100 */
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 /* Icon sizes */
@@ -68,6 +92,117 @@ select:focus {
   font-size: 1.25rem;
 }
 
+/* --- Task Item Base Styling --- */
+.task-item {
+  /* Base styles applied via Tailwind in script.js might override some here */
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+.task-item:hover {
+  border-left-color: #6366f1; /* Tailwind indigo-500 */
+  background-color: #f1f5f9; /* Tailwind slate-100 */
+}
+
+/* Style for completed tasks */
+.completed {
+  background-color: #f8fafc; /* Lighter background */
+  border-left-color: #94a3b8 !important; /* Grey border */
+}
+.completed .task-text {
+  text-decoration: line-through;
+  color: #94a3b8; /* Lighter text */
+}
+.completed:hover {
+  background-color: #f1f5f9; /* Consistent hover */
+}
+
+/* Styling for task with active notification */
+.task-item.has-notification .notify-button {
+  color: #ca8a04; /* amber-600 for better contrast */
+  background-color: #fef3c7; /* amber-100 */
+}
+.task-item.has-notification .notify-button:hover {
+  background-color: #fde68a; /* amber-200 */
+}
+/* Optional: different border/bg for tasks with notifications */
+/* .task-item.has-notification {
+     border-left-color: #f59e0b;
+     background-color: #fffbeb;
+} */
+
+/* Custom scrollbar for task list */
+.task-list::-webkit-scrollbar {
+  width: 6px;
+}
+.task-list::-webkit-scrollbar-track {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+.task-list::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 10px;
+}
+.task-list::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+.task-list {
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 #e2e8f0;
+}
+
+/* Transitions for buttons */
+button {
+  transition: all 0.15s ease-in-out;
+}
+button:active {
+  transform: scale(0.97);
+}
+
+/* --- PDF Import Panel Styling --- */
+#pdf-tasks-panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out, padding 0.3s ease-out,
+    border 0.3s ease-out, margin 0.3s ease-out, opacity 0.3s ease-out;
+  border-bottom: 0px solid transparent;
+  padding-top: 0;
+  padding-bottom: 0;
+  opacity: 0; /* Start hidden */
+}
+#pdf-tasks-panel.visible {
+  max-height: 400px; /* Adjust as needed */
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e8f0; /* slate-200 */
+  margin-bottom: 1.5rem;
+  opacity: 1;
+}
+#pdf-tasks-list {
+  /* Inherits scrollbar styling from .task-list */
+}
+
+/* Feedback message animation */
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  85% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+.animate-fade-in-out {
+  animation: fadeInOut 2.5s ease-in-out forwards;
+}
+
 /* ============================================ */
 /* Mobile Screens (max-width: 640px)           */
 /* ============================================ */
@@ -75,7 +210,7 @@ select:focus {
   /* --- Header --- */
   header {
     padding: 0.75rem;
-  } /* Add padding back to header */
+  }
   header .max-w-screen-xl {
     flex-direction: column;
     align-items: center;
@@ -84,11 +219,9 @@ select:focus {
   header h1 {
     font-size: 1.25rem;
   }
-
-  /* Date navigation */
   header .bg-slate-100 {
     width: 100%;
-    justify-content: space-between; /* Space out buttons/date */
+    justify-content: space-between;
     padding: 0.3rem 0.5rem;
   }
   #current-date {
@@ -99,7 +232,7 @@ select:focus {
   }
   header .bg-slate-100 button {
     padding: 0.5rem;
-  } /* Smaller nav buttons */
+  }
 
   /* --- Main Content Area --- */
   main.p-4 {
@@ -126,18 +259,17 @@ select:focus {
     margin-bottom: 1.25rem;
   }
   #pdf-tasks-header {
-    padding: 0.75rem 1rem; /* More horizontal padding */
-    flex-direction: row; /* Keep title and icon in row */
-    justify-content: space-between; /* Space them out */
-    align-items: center; /* Align vertically */
+    padding: 0.75rem 1rem;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
   }
   #pdf-tasks-header h3 {
     font-size: 1rem;
   }
   #pdf-tasks-header span#pdf-toggle-icon {
     position: static;
-  } /* Remove absolute positioning */
-
+  }
   #pdf-tasks-panel .flex {
     flex-direction: column;
     gap: 0.75rem;
@@ -163,8 +295,6 @@ select:focus {
     font-size: 0.75rem;
     padding: 0.25rem 0.6rem;
   }
-
-  /* Task list scrollbar */
   .task-list::-webkit-scrollbar {
     width: 4px;
   }
@@ -173,89 +303,94 @@ select:focus {
     min-height: 150px;
   }
 
-  /* --- Task Item Layout (Revised Flex Approach) --- */
+  /* --- Task Item Layout (Mobile - Grouped Buttons Right) --- */
   .task-item {
-    /* Use flex, allow wrapping */
     display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start; /* Align items to the top */
-    justify-content: space-between; /* Push actions to the end */
-    padding: 0.75rem 0.5rem; /* Adjust padding */
-    gap: 0.5rem; /* Gap between text area and actions if they wrap */
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.75rem 0.75rem;
+    gap: 0.75rem; /* Gap between text and actions row */
     border-left-width: 3px;
   }
 
-  /* Container for the text itself */
+  /* View Mode Container */
+  .task-view-mode {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 0.75rem; /* Match task-item gap */
+  }
+
+  /* Container for the text */
   .task-view-mode .task-text {
-    /* Allow text to take available space, considering potential button width */
-    flex-grow: 1;
-    /* Use width calc if needed, but flex-grow often works better */
-    /* width: calc(100% - 80px); Adjust '80px' based on typical action button combined width */
-    padding-right: 0.5rem; /* Add some padding to not touch buttons if side-by-side */
+    width: 100%;
     font-size: 0.9rem;
-    line-height: 1.4; /* Improve readability */
-    /* Ensure text breaks correctly */
+    line-height: 1.4;
     word-break: break-word;
     overflow-wrap: break-word;
-    hyphens: auto; /* Allow hyphenation */
+    hyphens: auto;
+    min-width: 0;
   }
 
   /* Action button container */
   .task-actions {
-    /* Keep buttons together, don't let them grow/shrink */
-    flex-shrink: 0;
-    display: flex; /* Ensure flex properties apply */
-    gap: 0.35rem; /* Adjust gap */
-    /* No absolute positioning */
-  }
-  .task-actions button {
-    padding: 0.5rem; /* Adjust padding */
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-end; /* Group ALL buttons to the right */
+    align-items: center; /* Align items vertically */
+    gap: 0.375rem; /* Consistent gap between all items (Tailwind gap-1.5) */
+    width: 100%;
   }
 
-  /* Specific styling for completed task text */
-  .completed .task-text {
-    text-decoration: line-through;
-    color: #a1a1aa; /* Slightly lighter grey (zinc-400) */
+  .task-actions .notify-container {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem; /* Match the main gap */
+  }
+  .notify-time-input {
+    font-size: 0.75rem;
+    height: 28px;
+  }
+  .task-actions button {
+    padding: 0.5rem; /* Consistent padding */
   }
 
   /* --- Task Editing Mode (Mobile) --- */
   .task-edit-mode {
-    display: none; /* Keep hidden by default */
+    display: none;
     flex-direction: column;
     width: 100%;
-    gap: 0.75rem; /* Space between input and button row */
+    gap: 0.75rem;
   }
-  /* Style when the task item is being edited */
   .task-item.editing .task-edit-mode {
-    display: flex; /* Show the edit controls */
+    display: flex;
   }
   .task-item.editing .task-view-mode {
-    display: none; /* Hide the view mode */
+    display: none;
   }
-
   .task-edit-mode input[type="text"] {
-    width: 100%; /* Full width input */
-    margin-bottom: 0; /* Remove margin, use gap */
-    font-size: 0.9rem; /* Match view mode text size */
+    width: 100%;
+    margin-bottom: 0;
+    font-size: 0.9rem;
   }
-  /* Container for Save/Cancel buttons */
   .task-edit-mode div {
+    /* Button container */
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
     width: 100%;
   }
   .task-edit-mode button {
-    padding: 0.5rem 0.85rem; /* Adjust button padding */
+    padding: 0.5rem 0.85rem;
     font-size: 0.8rem;
-    flex-grow: 0; /* Don't let buttons grow */
+    flex-grow: 0;
     flex-shrink: 0;
   }
 
   /* --- Clear Completed Button --- */
   #clear-completed-btn {
     width: 100%;
-    margin-top: 1rem; /* More space above */
+    margin-top: 1rem;
     padding: 0.75rem;
     font-size: 0.85rem;
   }
@@ -268,19 +403,65 @@ select:focus {
   #no-tasks-message .material-symbols-outlined {
     font-size: 2rem;
   }
-}
+} /* End of @media (max-width: 640px) */
 
 /* ============================================ */
-/* Medium-sized screens (Tablets)              */
-/* (min-width: 641px) and (max-width: 1024px)  */
+/* Medium-sized screens (Tablets and up)       */
+/* (min-width: 641px)                          */
 /* ============================================ */
-@media (min-width: 641px) and (max-width: 1024px) {
+@media (min-width: 641px) {
+  /* Reset mobile column layout and apply row layout */
+  .task-item {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem; /* Adjust padding */
+  }
+  .task-view-mode {
+    flex-direction: row;
+    align-items: center;
+    width: 100%; /* Allow view mode to manage width */
+    gap: 1rem; /* Gap between text and actions group */
+  }
+  .task-view-mode .task-text {
+    flex-grow: 1; /* Allow text to take available space */
+    width: auto; /* Reset width */
+    font-size: 1rem;
+    padding-right: 1rem;
+    margin-bottom: 0;
+    min-width: 0; /* Prevent overflow */
+  }
+  .task-actions {
+    flex-wrap: nowrap;
+    width: auto; /* Let actions size naturally */
+    justify-content: flex-end;
+    gap: 0.375rem; /* Gap between buttons */
+    margin-top: 0; /* Reset mobile margin */
+  }
+  .task-actions .notify-container {
+    gap: 0.375rem; /* Keep gap consistent */
+  }
+  .notify-time-input {
+    font-size: 0.8rem;
+    height: 30px;
+  }
+  .task-actions button {
+    padding: 0.5rem; /* Reset padding if needed */
+  }
+
+  /* Other general resets for larger screens */
   header .max-w-screen-xl {
     padding: 0 1rem;
     gap: 1.5rem;
+    flex-wrap: nowrap;
   }
   #add-task-form {
     flex-wrap: nowrap;
+    flex-direction: row;
+  }
+  #add-task-form button {
+    width: auto;
   }
   #task-input {
     min-width: 60%;
@@ -288,22 +469,10 @@ select:focus {
   main .max-w-screen-xl {
     padding: 1.5rem;
   }
-
-  .task-item {
-    flex-wrap: nowrap; /* Prevent wrapping on tablets */
-    align-items: center; /* Align items centrally */
-  }
-  .task-view-mode .task-text {
-    font-size: 1rem; /* Reset font size */
-    padding-right: 1rem; /* Ensure padding */
-    margin-bottom: 0;
-  }
-  .task-actions {
-    /* Reset any mobile-specific positioning if needed */
-  }
   .task-edit-mode {
-    flex-direction: row; /* Edit controls in a row */
+    flex-direction: row;
     align-items: center;
+    gap: 0.5rem;
   }
   .task-edit-mode input {
     width: auto;
@@ -313,7 +482,16 @@ select:focus {
   }
   .task-edit-mode div {
     width: auto;
-  } /* Let buttons size naturally */
+    gap: 0.375rem;
+  }
+  .task-edit-mode button {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.75rem;
+  }
+  #clear-completed-btn {
+    width: auto;
+    margin-top: 0;
+  }
 }
 
 /* ============================================ */
@@ -321,7 +499,6 @@ select:focus {
 /* (max-height: 500px) - Adjust as needed     */
 /* ============================================ */
 @media (max-height: 500px) and (orientation: landscape) {
-  /* Less aggressive changes than before */
   header {
     padding: 0.5rem;
   }
@@ -338,66 +515,16 @@ select:focus {
     width: auto;
     padding: 0.6rem 1rem;
   }
-
   .task-list {
     max-height: 40vh;
-  } /* Adjust based on testing */
+  }
   #pdf-tasks-panel.visible {
     max-height: 120px;
   }
   #pdf-tasks-list {
     max-height: 80px;
   }
-}
-
-/* ============================================ */
-/* Fixes & Enhancements                        */
-/* ============================================ */
-
-/* Ensure smooth transitions */
-button,
-input,
-select,
-textarea,
-.task-item,
-#pdf-tasks-panel {
-  transition: all 0.15s ease-in-out;
-}
-/* Add transition specifically for background color on hover */
-.task-item:hover {
-  background-color: #f1f5f9; /* slate-100 */
-}
-
-#pdf-tasks-panel {
-  /* Ensure transition includes properties changed on visibility */
-  transition: max-height 0.3s ease-out, padding 0.3s ease-out,
-    border-color 0.3s ease-out, margin 0.3s ease-out, opacity 0.3s ease-out;
-  opacity: 1; /* Default opacity */
-}
-#pdf-tasks-panel:not(.visible) {
-  opacity: 0; /* Fade out when hidden */
-  max-height: 0 !important; /* Ensure height collapses */
-}
-
-/* Feedback message animation */
-@keyframes fadeInOut {
-  0% {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  15% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  85% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-}
-.animate-fade-in-out {
-  animation: fadeInOut 2.5s ease-in-out forwards;
+  /* Task item layout in landscape might need specific tweaks if the above isn't enough */
+  /* Consider reverting to row layout for task items here if space allows */
+  /* @media (max-width: 640px) and (max-height: 500px) and (orientation: landscape) { ... } */
 }
